@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coaching Scorecard – Justin Hübert</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f5f5f7;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 48px;
+    max-width: 680px;
+    width: 100%;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.08);
+  }
+
+  .header { margin-bottom: 36px; }
+
+  .tag {
+    display: inline-block;
+    background: #fff0e6;
+    color: #FF5C00;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 100px;
+    margin-bottom: 16px;
+  }
+
+  .header h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 6px;
+  }
+
+  .header p { font-size: 13px; color: #888; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #f0f0f0;
+    margin: 28px 0;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #bbb;
+    margin-bottom: 20px;
+  }
+
+  .rows {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .row-wrapper {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .row-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-radius: 14px;
+    transition: background 0.15s;
+  }
+
+  .row-main:hover { background: #fafafa; }
+  .row-wrapper.open .row-main { background: #fafafa; }
+
+  .row-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #222;
+    width: 195px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .chevron {
+    font-size: 11px;
+    color: #ccc;
+    transition: transform 0.2s, color 0.15s;
+    display: inline-block;
+  }
+
+  .row-wrapper.open .chevron {
+    transform: rotate(90deg);
+    color: #FF5C00;
+  }
+
+  .flames {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .flame { font-size: 19px; transition: transform 0.2s; }
+  .flame:hover { transform: scale(1.15); }
+  .flame.off { filter: grayscale(1) opacity(0.2); }
+
+  .score-badge {
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 3px 10px;
+    min-width: 38px;
+    text-align: center;
+  }
+
+  .score-badge.green  { color: #1a9e6b; background: #e6f9f2; }
+  .score-badge.yellow { color: #b07d00; background: #fff8e1; }
+  .score-badge.red    { color: #cc2200; background: #fff0ee; }
+
+  .icon-btns {
+    display: flex;
+    gap: 6px;
+    margin-left: 4px;
+  }
+
+  .icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .icon-btn:hover { background: #efefef; }
+  .icon-btn.active-feedback { background: #fff0e6; }
+  .icon-btn.active-tip      { background: #fffbe6; }
+
+  .panel {
+    display: none;
+    padding: 0 12px 14px 12px;
+    animation: fadeIn 0.18s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel-inner {
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.65;
+    color: #444;
+  }
+
+  .panel-inner.feedback {
+    background: #fff8f4;
+    border-left: 3px solid #FF5C00;
+  }
+
+  .panel-inner.tip {
+    background: #fffdf0;
+    border-left: 3px solid #f5c800;
+  }
+
+  .panel-inner strong { font-weight: 600; }
+  .panel-inner.feedback strong { color: #FF5C00; }
+  .panel-inner.tip strong      { color: #b07d00; }
+
+  .panel-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .panel-inner.feedback .panel-title { color: #FF5C00; }
+  .panel-inner.tip .panel-title      { color: #b07d00; }
+
+  /* ── Summary ── */
+  .summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafafa;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-top: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+
+  .summary:hover { background: #f0f0f0; }
+  .summary.open  { background: #f0f0f0; border-radius: 16px 16px 0 0; }
+
+  .summary-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .summary-left span:first-child {
+    font-size: 12px;
+    font-weight: 600;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .summary-chevron {
+    font-size: 10px;
+    color: #bbb;
+    transition: transform 0.2s, color 0.15s;
+    display: inline-block;
+  }
+
+  .summary.open .summary-chevron {
+    transform: rotate(90deg);
+    color: #FF5C00;
+  }
+
+  .summary-left span:last-child {
+    font-size: 22px;
+    font-weight: 800;
+    color: #111;
+  }
+
+  .overall-flames { display: flex; gap: 4px; }
+  .overall-flame { font-size: 26px; }
+  .overall-flame.off { filter: grayscale(1) opacity(0.15); }
+
+  /* Summary detail panel */
+  .summary-detail {
+    display: none;
+    background: #f7f7f7;
+    border-radius: 0 0 16px 16px;
+    padding: 16px;
+    animation: fadeIn 0.18s ease;
+  }
+
+  .summary-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .summary-col {
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .summary-col.good {
+    background: #f0faf5;
+    border: 1.5px solid #b8ecd4;
+  }
+
+  .summary-col.work {
+    background: #fffbea;
+    border: 1.5px solid #f5e08a;
+  }
+
+  .summary-col-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .summary-col.good .summary-col-title { color: #1a9e6b; }
+  .summary-col.work .summary-col-title { color: #b07d00; }
+
+  .summary-col ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .summary-col ul li {
+    font-size: 12.5px;
+    color: #444;
+    line-height: 1.5;
+    padding-left: 16px;
+    position: relative;
+  }
+
+  .summary-col.good ul li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #1a9e6b;
+    font-weight: 700;
+    font-size: 11px;
+  }
+
+  .summary-col.work ul li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #b07d00;
+    font-weight: 700;
+    font-size: 11px;
+  }
+
+  .footnote {
+    margin-top: 24px;
+    font-size: 11px;
+    color: #bbb;
+    text-align: center;
+  }
+
+  .sep { margin: 8px 0; }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="tag">Coaching Scorecard</div>
+    <h1>Justin Hübert</h1>
+    <p>Cold Calling Recording &nbsp;·&nbsp; 22. Mai 2026 &nbsp;·&nbsp; Bewertet von Julia</p>
+  </div>
+
+  <hr class="divider">
+  <div class="section-label">Bewertung nach Bereichen — klick auf 💬 für Feedback, auf 💡 für Tipps</div>
+
+  <!-- Rows injected by JS -->
+  <div class="rows" id="rows"></div>
+
+  <hr class="divider">
+
+  <!-- Summary (clickable) -->
+  <div class="summary" id="summaryBox" onclick="toggleSummary()">
+    <div class="summary-left">
+      <span>
+        <span class="summary-chevron">›</span>
+        Gesamtbewertung
+      </span>
+      <span>2,1 / 5</span>
+    </div>
+    <div class="overall-flames">
+      <span class="overall-flame">🔥</span>
+      <span class="overall-flame">🔥</span>
+      <span class="overall-flame off">🔥</span>
+      <span class="overall-flame off">🔥</span>
+      <span class="overall-flame off">🔥</span>
+    </div>
+  </div>
+
+  <!-- Summary detail -->
+  <div class="summary-detail" id="summaryDetail">
+    <div class="summary-cols">
+      <div class="summary-col good">
+        <div class="summary-col-title">✅ Das hast du gut gemacht</div>
+        <ul>
+          <li>Energie und Authentizität durchgehend stark</li>
+          <li>Freundliche, verbindliche Tonalität</li>
+          <li>Name und Firmierung sitzen immer</li>
+          <li>Gatekeeper-Handling klar und direkt</li>
+          <li>Hartnäckigkeit – nach Absagen sofort weiter</li>
+          <li>Selbstreflexion zwischen den Calls</li>
+        </ul>
+      </div>
+      <div class="summary-col work">
+        <div class="summary-col-title">⚡ Daran solltest du arbeiten</div>
+        <ul>
+          <li>Opening Line einüben und konsequent nutzen</li>
+          <li>Mindestens 3 Fragen vor dem Pitch stellen</li>
+          <li>ABF-Formel als Reflex für Einwände lernen</li>
+          <li>Pitch stärken – keine Selbstverkleinerung</li>
+          <li>Jeden Call mit einem nächsten Schritt beenden</li>
+          <li>Frust nicht ins Gespräch durchsickern lassen</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    Basis: Cold Calling Recording 22.05.2026 &nbsp;·&nbsp; HeySales Guideline SDR Onboarding
+  </div>
+</div>
+
+<script>
+const data = [
+  {
+    label: "Energie & Authentizität",
+    score: 4,
+    badge: "green",
+    feedback: "Du bringst durchgehend echte Energie mit – du klingst nie abgelesen oder aufgesetzt. Die Freundlichkeit ist authentisch, nicht gespielt. Auch nach Absagen gehst du sofort weiter, ohne die Motivation zu verlieren. Einziger Abzug: Der Frust nach dem Böblingen-Call sickert kurz ins Gespräch durch ('Haben wir irgendwas verbrochen?') – das darf nicht passieren.",
+    tip: "<strong>Für volle 5 Flammen:</strong> Lern, den Frust vollständig abzukoppeln. Wenn ein Call schlecht läuft, kurz ausatmen, dann nächster Call – als wäre nichts gewesen. Deine Energie ist dein stärkstes Tool. Schütz sie."
+  },
+  {
+    label: "Kommunikationsskills",
+    score: 3,
+    badge: "yellow",
+    feedback: "Du sprichst klar, flüssig und verständlich. Du hörst zu und reagierst auf das, was die Gesprächspartnerin sagt. Was noch fehlt: strukturierte Fragetechnik, bewusstes Einsetzen von Pausen und das Abfedern von Einwänden mit der richtigen Sprache.",
+    tip: "<strong>Für volle 5 Flammen:</strong> Üb gezielt Fragetechnik – offene vs. geschlossene Fragen, Folgefragen, Schweigen aushalten. Stell nach jeder Antwort des Kunden erstmal eine Gegenfrage, bevor du selbst redest. Das verändert die ganze Gesprächsdynamik."
+  },
+  {
+    label: "Beziehungsaufbau",
+    score: 3,
+    badge: "yellow",
+    feedback: "Du schaffst es schnell, eine angenehme Gesprächsatmosphäre zu erzeugen – besonders beim Gatekeeper. Du bist verbindlich, freundlich und nicht aufdringlich. Was noch fehlt: du baust keine tiefere Verbindung zum Entscheider auf, weil das Gespräch zu schnell in den Pitch übergeht, bevor echter Rapport entstehen kann.",
+    tip: "<strong>Für volle 5 Flammen:</strong> Nimm dir 60 Sekunden mehr für Small Talk und echtes Interesse – bevor du in den Sales-Modus gehst. Eine echte Frage zum Unternehmen, zur Situation, zum Menschen. 'Menschen kaufen von Menschen' steht nicht umsonst in eurem Onboarding."
+  },
+  {
+    label: "Flexibilität & Kreativität",
+    score: 2,
+    badge: "yellow",
+    feedback: "Du reagierst auf unerwartete Situationen grundsätzlich okay – z.B. als du bei Frau Degen landest statt bei Frau Kerber, machst du das Beste draus. Was fehlt: kreative Umgehung von Einwänden, alternative Gesprächsführung wenn der Standard-Weg blockiert ist, und situatives Anpassen des Pitches auf den jeweiligen Kunden.",
+    tip: "<strong>Für volle 5 Flammen:</strong> Entwickel für die häufigsten Blocker-Situationen je 2-3 alternative Reaktionsmöglichkeiten. Wenn einer sagt 'kein Interesse', brauchst du drei verschiedene Wege, um trotzdem im Gespräch zu bleiben – und entscheidest situativ welchen du wählst."
+  },
+  {
+    label: "Einstieg",
+    score: 2,
+    badge: "yellow",
+    separator: true,
+    feedback: "Name und Firmierung sitzen – das ist die Basis. Aber es fehlt eine Opening Line, die Mehrwert kommuniziert, bevor du fragst. Du landest bei Frau Degen und gehst sofort in den Qualifizierungsmodus, ohne ihr einen Grund zu geben, zuzuhören. Kein Aufhänger, keine Vorbereitung, keine individuelle Einstiegsfrage.",
+    tip: "<strong>Für volle 5 Flammen:</strong> Lern dir eine feste Opening Line ein – zum Beispiel: 'Wir unterstützen gerade viele Unternehmen in eurer Branche dabei, offene Stellen schneller zu besetzen. Deshalb direkt: Welche Stelle ist bei euch gerade am dringendsten?' Üb das 10x laut, bevor du den nächsten Call machst."
+  },
+  {
+    label: "Bedarfsanalyse",
+    score: 1,
+    badge: "red",
+    feedback: "Eine einzige Frage ('Nutzt ihr externe Plattformen?'), dann direkt Pitch. Das ist fast keine Bedarfsanalyse. Nach dem Call weißt du nicht: wie viele Stellen offen sind, wo der Pain liegt, wie lange Stellen offen stehen, wer entscheidet oder was der Recruiting-Aufwand ist. Diagnose vor Rezept – das ist die wichtigste Baustelle.",
+    tip: "<strong>Für volle 5 Flammen:</strong> Regel für dich: Mindestens 3 offene Fragen, bevor du pitchst. Merke dir: ABF – Abfedern, Befragen, dann erst Formulieren. Wenn 'wir machen alles inhouse' kommt: 'Das kenne ich – und wie zufrieden bist du damit? Gibt es Stellen, die deutlich länger offen stehen als geplant?'"
+  },
+  {
+    label: "Pitch",
+    score: 2,
+    badge: "yellow",
+    feedback: "Die Richtung stimmt – 'wir füllen euren Posteingang mit einstellbaren Kandidaten' ist inhaltlich korrekt. Aber 'wir sind auch nur eine Stellenbörse' ist eine massive Selbstverkleinerung. Kein Bezug auf die Stadt Böblingen, keine Zahlen, kein Social Proof. Der Pitch war generisch statt individuell.",
+    tip: "<strong>Für volle 5 Flammen:</strong> Streich 'wir sind auch nur...' aus deinem Wortschatz. Sag stattdessen: 'Was uns unterscheidet: wir optimieren nicht auf Reichweite, sondern auf Einstellungen. 2024 haben wir damit über 24.000 Einstellungen ermöglicht.' Kurz, stark, mit Zahl. Und immer mit Bezug auf das konkrete Unternehmen."
+  },
+  {
+    label: "Einwandbehandlung",
+    score: 1,
+    badge: "red",
+    feedback: "Als Frau Degen ablehnt, kommt: 'Haben wir irgendwas verbrochen?' – das ist emotional, vorwurfsvoll und zeigt, dass keine strukturierte Technik vorhanden ist. Die ABF-Formel (Abfedern – Behandeln – Fragen) fehlt komplett. Kein Versuch, den Einwand zu öffnen. Auch kein Plan B für die Indeed-Situation.",
+    tip: "<strong>Für volle 5 Flammen:</strong> Lern die ABF-Formel als Reflex: Abfedern ('Das kenne ich') → Behandeln (neugierige Gegenfrage) → Fragen ('Gibt es trotzdem Stellen, die nicht so laufen wie geplant?'). Entwickel außerdem eine eigene Formulierung speziell für den Indeed-Einwand – du wirst ihm noch oft begegnen."
+  },
+  {
+    label: "Closing",
+    score: 1,
+    badge: "red",
+    feedback: "Es gab kein Closing. Der einzige echte Sales-Call endete mit einer Ablehnung – ohne dass du irgendeinen nächsten Schritt versucht hast zu sichern. Kein Demo-Termin, keine Wiedervorlage, keine Erlaubnis zum Rückruf. Das ist komplett weggefallen.",
+    tip: "<strong>Für volle 5 Flammen:</strong> Jeder Call endet mit einem definierten nächsten Schritt – immer. Auch wenn es ein hartes Nein gibt: 'Darf ich mich in ein paar Monaten kurz melden, wenn ihr die Situation neu bewertet?' Das reicht. Aber irgendetwas muss gesichert sein."
+  }
+];
+
+const container = document.getElementById('rows');
+let sepAdded = false;
+
+data.forEach((item) => {
+  if (item.separator && !sepAdded) {
+    const sep = document.createElement('hr');
+    sep.className = 'divider sep';
+    container.appendChild(sep);
+    sepAdded = true;
+  }
+
+  const flames = Array.from({length: 5}, (_, i) =>
+    `<span class="flame${i >= item.score ? ' off' : ''}">🔥</span>`
+  ).join('');
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'row-wrapper';
+  wrapper.innerHTML = `
+    <div class="row-main">
+      <div class="row-label">
+        <span class="chevron">›</span>
+        ${item.label}
+      </div>
+      <div class="flames">${flames}</div>
+      <div class="score-badge ${item.badge}">${item.score}/5</div>
+      <div class="icon-btns">
+        <button class="icon-btn btn-feedback" title="Feedback anzeigen">💬</button>
+        <button class="icon-btn btn-tip" title="Tipps anzeigen">💡</button>
+      </div>
+    </div>
+    <div class="panel panel-feedback">
+      <div class="panel-inner feedback">
+        <div class="panel-title">💬 Warum diese Bewertung?</div>
+        ${item.feedback}
+      </div>
+    </div>
+    <div class="panel panel-tip">
+      <div class="panel-inner tip">
+        <div class="panel-title">💡 So kommst du auf 5 Flammen</div>
+        ${item.tip}
+      </div>
+    </div>
+  `;
+
+  const rowMain      = wrapper.querySelector('.row-main');
+  const panelFeedback = wrapper.querySelector('.panel-feedback');
+  const panelTip      = wrapper.querySelector('.panel-tip');
+  const btnFeedback   = wrapper.querySelector('.btn-feedback');
+  const btnTip        = wrapper.querySelector('.btn-tip');
+
+  // Click label area → toggle feedback
+  rowMain.addEventListener('click', (e) => {
+    if (e.target.closest('.icon-btn')) return;
+    const isOpen = panelFeedback.style.display === 'block';
+    closeAllPanels(wrapper);
+    if (!isOpen) {
+      panelFeedback.style.display = 'block';
+      wrapper.classList.add('open');
+      btnFeedback.classList.add('active-feedback');
+    }
+  });
+
+  // Feedback button
+  btnFeedback.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = panelFeedback.style.display === 'block';
+    closeAllPanels(wrapper);
+    if (!isOpen) {
+      panelFeedback.style.display = 'block';
+      wrapper.classList.add('open');
+      btnFeedback.classList.add('active-feedback');
+    }
+  });
+
+  // Tip button
+  btnTip.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = panelTip.style.display === 'block';
+    closeAllPanels(wrapper);
+    if (!isOpen) {
+      panelTip.style.display = 'block';
+      wrapper.classList.add('open');
+      btnTip.classList.add('active-tip');
+    }
+  });
+
+  container.appendChild(wrapper);
+});
+
+function closeAllPanels(wrapper) {
+  wrapper.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+  wrapper.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active-feedback', 'active-tip'));
+  wrapper.classList.remove('open');
+}
+
+function toggleSummary() {
+  const box    = document.getElementById('summaryBox');
+  const detail = document.getElementById('summaryDetail');
+  const isOpen = detail.style.display === 'block';
+  detail.style.display = isOpen ? 'none' : 'block';
+  box.classList.toggle('open', !isOpen);
+}
+</script>
+</body>
+</html>
