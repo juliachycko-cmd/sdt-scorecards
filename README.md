@@ -1,1 +1,1 @@
-# sdt-scorecards
+# sdr-call-coaching-scorecards
